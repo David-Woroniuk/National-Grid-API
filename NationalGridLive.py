@@ -90,3 +90,6 @@ class NationalGridLive(object):
       dataset = pd.DataFrame(data, columns=['NTS Demand Flow', 'Time Published', 'Value','Time Applicable','Expired (Y/N)',
                                  'Amended (Y/N)','Amended Timestamp','Substituted (Y/N)','Late received (Y/N)'])
       return dataset
+  
+if __name__ == "__main__":
+ data = NationalGridLive(output_directory, 'dataset.csv').collect_data()
