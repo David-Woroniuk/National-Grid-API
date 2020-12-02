@@ -1,11 +1,11 @@
 !pip install xmltodict
 !pip install tqdm
 
-import pandas as pd
-from datetime import datetime
 import requests
+import pandas as pd
 import xmltodict
 from csv import writer
+from datetime import datetime
 from tqdm import tqdm
 import os
 import time
@@ -35,6 +35,8 @@ class NationalGridLive(object):
     if verbose:
       pbar = tqdm(total=3, position = 0)
       pbar.set_description("Checking if input parameters are correct.")
+      time.sleep(2)
+      self.pbar = pbar
 
     if file_name != None:
       if isinstance(file_name, str) is False:
@@ -43,10 +45,8 @@ class NationalGridLive(object):
     if output_directory != None:
       if isinstance(output_directory, str) is False:
         raise TypeError("'output_directory' argument must be a string.")
-
-
+          
     self.verbose = verbose
-    self.pbar = pbar
     self.file_name = file_name
     self.output_directory = output_directory
 
@@ -57,6 +57,12 @@ class NationalGridLive(object):
     repository is specified, this function is not called.
     '''
     file_location = os.path.join(self.output_directory, self.file_name)
+
+    if self.verbose:
+      self.pbar.update()
+      self.pbar.set_description("Returning output.")
+      time.sleep(2)
+      self.pbar.close()
 
     with open(file_location, 'a+', newline = '') as write_obj:
       csv_writer = writer(write_obj)
@@ -91,6 +97,7 @@ class NationalGridLive(object):
     if self.verbose:
       self.pbar.update()
       self.pbar.set_description("Formatting output data.")
+      time.sleep(2)
 
     for i in range(0, total):
       entry_name = total_demand['EDPObjectCollection']['EDPObjectBE']['EDPObjectName']
@@ -112,7 +119,7 @@ class NationalGridLive(object):
       if self.verbose:
         self.pbar.update()
         self.pbar.set_description("Returning output.")
-        time.sleep(5)
+        time.sleep(2)
         self.pbar.close()
 
       return dataset
