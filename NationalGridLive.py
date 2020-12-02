@@ -1,23 +1,27 @@
-pip install xmltodict
+!pip install xmltodict
+!pip install tqdm
 
-import requests
 import pandas as pd
+from datetime import datetime
+import requests
 import xmltodict
 from csv import writer
-from datetime import datetime
+from tqdm import tqdm
 import os
+import time
+
 
 class NationalGridLive(object):
   '''
   This class provides a wrapper for the instantaneous data provision of the
   National Grid API, relating to total Natural Gas Demand in the UK.
 
-  Arguments:
+  -------------------------------Arguments------------------------------------------- 
 
   output_directory: the directory in which the output should be stored.
   file_name: the name of the file within the directory.
 
-  Returns:
+  -------------------------------Returns---------------------------------------------
 
   If no input arguments: dataset: a Pandas DataFrame containing the output data.
   If input arguments: the data is appended to the .csv file specified.  
@@ -25,8 +29,13 @@ class NationalGridLive(object):
 
   def __init__(self,
                output_directory = None,
-               file_name = None):
-  
+               file_name = None,
+               verbose = True):
+    
+    if verbose:
+      pbar = tqdm(total=3, position = 0)
+      pbar.set_description("Checking if input parameters are correct.")
+
     if file_name != None:
       if isinstance(file_name, str) is False:
         raise TypeError("'file_name' argument must be a string.")
@@ -35,6 +44,9 @@ class NationalGridLive(object):
       if isinstance(output_directory, str) is False:
         raise TypeError("'output_directory' argument must be a string.")
 
+
+    self.verbose = verbose
+    self.pbar = pbar
     self.file_name = file_name
     self.output_directory = output_directory
 
@@ -56,6 +68,10 @@ class NationalGridLive(object):
     as specified by the 'file_name' and 'output_directory' arguments, or to a 
     Pandas DataFrame, if no arguments are provided.
     '''
+    if self.verbose:
+      self.pbar.update()
+      self.pbar.set_description("Retrieving Data.")
+
     data = []
     url = "http://energywatch.natgrid.co.uk/EDP-PublicUI/PublicPI/InstantaneousFlowWebService.asmx?WSDL"
     headers = {'content-type': 'text/xml'}
@@ -71,6 +87,10 @@ class NationalGridLive(object):
     xml_dict = xmltodict.parse(result_xml)
     total_demand = xml_dict['soap:Envelope']['soap:Body']['GetInstantaneousFlowDataResponse']['GetInstantaneousFlowDataResult']['EDPReportPage']['EDPEnergyGraphTableCollection']['EDPEnergyGraphTableBE'][4]
     total = len(total_demand['EDPObjectCollection']['EDPObjectBE']['EnergyDataList']['EDPEnergyDataBE'])
+    
+    if self.verbose:
+      self.pbar.update()
+      self.pbar.set_description("Formatting output data.")
 
     for i in range(0, total):
       entry_name = total_demand['EDPObjectCollection']['EDPObjectBE']['EDPObjectName']
@@ -89,7 +109,14 @@ class NationalGridLive(object):
     if self.file_name == None or self.output_directory == None:
       dataset = pd.DataFrame(data, columns=['NTS Demand Flow', 'Time Published', 'Value','Time Applicable','Expired (Y/N)',
                                  'Amended (Y/N)','Amended Timestamp','Substituted (Y/N)','Late received (Y/N)'])
+      if self.verbose:
+        self.pbar.update()
+        self.pbar.set_description("Returning output.")
+        time.sleep(5)
+        self.pbar.close()
+
       return dataset
-  
-if __name__ == "__main__":
- data = NationalGridLive(output_directory, 'dataset.csv').collect_data()
+      
+
+if __name__ == "main":
+  data = NationalGridLive(verbose = False).collect_data()
